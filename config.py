@@ -2,7 +2,9 @@
 
 import sys
 class config():
-	
+	"""
+good day today,nice weather,I mean
+	"""	
 	def __init__(self,file):
 		self.conf=self.resolve_config(file)
 			
@@ -29,7 +31,9 @@ class config():
 			return self.conf[key]
 		except:
 			return None
+	def dump_conf(self):
+		for item in self.conf:
+			print "%s --> %s"%(item,self.conf[item])
 
 if __name__ =="__main__":
-	conf=config(sys.argv[1])
-	print conf.get_value("denable_ipset")
+	pass
