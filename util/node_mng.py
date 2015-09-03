@@ -31,7 +31,7 @@ class node_mng_entity:
 	age_exit_flag=False
 	nme_lock=threading.Lock()
 	node_tbl=dict()
-	node_expiry_time=20 #seconds age timers
+	node_expiry_time=300 #seconds age timers
 	node_id_pool=set()
 	node_uuid_pool=set()
 	def __init__(self):
@@ -83,9 +83,12 @@ class node_mng_entity:
 		return True
 
 	def node_delete(self,key_id):
+		self.nme_lock.acquire()
 		if self.node_find(key_id) is not None:
 			self.node_tbl[key_id].node_delete_callback()#call delete routine
 			del self.node_tbl[key_id]
+		self.nme_lock.release()
+
 	def node_update(self,key_id):
 		self.nme_lock.acquire()
 		if key_id in self.node_tbl:
@@ -120,14 +123,17 @@ def age_timer(nme):
 		nme.nme_lock.release()
 
 if __name__ == "__main__":
+	"""
 	nme=node_mng_entity()
 	node=nme.node_alloc(node_info,**{"id":nme.node_id_allocate(),"addr":"192.168.6.1"})
 	nme.node_register(node.node_id,node)
 	#nme.node_delete(node.node_id)
-	threading._sleep(500)
+	#threading._sleep(500)
 	nme.stop_age_timer()
 	node_bak=nme.node_find(node.node_id)
 	print node_bak.node_id
 	print nme.node_uuid_allocate()
 	print nme.node_uuid_allocate()
 	print nme.node_uuid_allocate()
+	"""
+	pass
