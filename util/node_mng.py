@@ -17,7 +17,8 @@ class node_info:
 		self.uuid=uuid #identifier used by super node
 		self.addr=addr# identifier used by index node
 		self.timer_cnt=0
-		
+		self.client_cnt=0
+
 	def node_init_callback(self):
 		
 		pass
@@ -33,9 +34,9 @@ class node_mng_entity:
 	instance on index node or super node
 	"""
 	age_exit_flag=False
-	nme_lock=threading.Lock()
+	nme_lock=threading.RLock()
 	node_tbl=dict()
-	node_expiry_time=20 #seconds age timers
+	node_expiry_time=300 #seconds age timers
 	node_id_pool=set()
 	node_uuid_pool=set()
 	role=None
@@ -114,6 +115,9 @@ class node_mng_entity:
 		self.nme_lock.acquire()
 		if self.node_find(key_id) is not None:
 			self.node_tbl[key_id].node_delete_callback()#call delete routine
+			#delete uuid and node_id in id-pool and uuid in uuid-pool
+			self.node_id_pool.discard(key_id)
+			self.node_uuid_pool.discard(self.node_tbl[key_id].uuid)
 			del self.node_tbl[key_id]
 		self.nme_lock.release()
 
@@ -138,7 +142,7 @@ def age_timer(nme):
 		threading._sleep(interval_time)
 		nme.nme_lock.acquire()
 		del_lst=set()
-
+		#print "meeeow"
 		#traverse the node table,fidn these expired node,and recollect them
 		for nod in nme.node_tbl:
 			if nme.node_tbl[nod].timer_cnt > nme.node_expiry_time:
@@ -148,16 +152,24 @@ def age_timer(nme):
 				nme.node_tbl[nod].timer_cnt+=interval_time
 		for ele in del_lst:
 			if ele in nme.node_tbl:
-				del nme.node_tbl[ele]
+				#nme.node_id_pool.discard(ele)
+				#nme.node_uuid_pool.discard(nme.node_tbl[ele].uuid)
+				nme.node_delete(ele)
+				#del nme.node_tbl[ele]
+				#nme.node_delete(ele)
+		#help(nme)
 		nme.nme_lock.release()
 
 if __name__ == "__main__":
-	'''
+	"""
 	nme=node_mng_entity()
 	node=nme.node_alloc(node_info,**{"id":nme.node_id_allocate(),"addr":"192.168.6.1","uuid":nme.node_uuid_allocate()})
 	nme.node_register(node.node_id,node)
+	print "meee"
 	#nme.node_delete(node.node_id)
+	print "meeeow"
 	#threading._sleep(500)
+	help(nme)
 	print nme.node_find_by_addr("192.168.6.1").uuid
 	nme.stop_age_timer()
 	node_bak=nme.node_find(node.node_id)
@@ -165,5 +177,5 @@ if __name__ == "__main__":
 	print nme.node_uuid_allocate()
 	print nme.node_uuid_allocate()
 	print nme.node_uuid_allocate()
-	'''
+	"""
 	pass

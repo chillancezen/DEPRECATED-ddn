@@ -81,10 +81,74 @@ def super_node_update_cb(arg):
     else:
         nme.node_update(node.node_id)
         fd.send(generate_return_msg(200))
+
+def super_node_unregister_cb(arg):
+    """
+    called by index ndoe
+    :param arg:
+    :return:
+    """
+    fd,addr,nme,para=arg
+    if nme.role is not "node_index":
+        fd.send(generate_return_msg(401))
+        return
+    node=nme.node_find_by_addr(addr[0])
+    if node:
+        nme.node_delete(node.node_id)
+        fd.send(generate_return_msg(200))
+    else:
+        fd.send(generate_return_msg(404))
+    pass
+def super_node_request_cb(arg):
+    fd,addr,nme,para=arg
+    if nme.role is not "node_index":
+        fd.send(generate_return_msg(401))
+        return
+    # validate parameter
+    if "ban_super_node_list" in para and type(para["ban_super_node_list"]) is not  list:
+        fd.send(generate_return_msg(400))
+        return
+
+    #decode these parameters
+    recommand_node=None
+    if "recommand_super_node" in para:
+        recommand_node=para["recommand_super_node"]
+    ban_list=list()
+    if "ban_super_node_list" in para:
+        for ele in para["ban_super_node_list"]:
+            ban_list.append(ele)
+    print recommand_node,ban_list
+    legal_node=None
+    nme.nme_lock.acquire()
+    for id in nme.node_tbl:
+        node=nme.node_tbl[id]
+        if node.addr in ban_list:
+            continue
+        #try to find least loaded node
+        if node.addr ==  recommand_node:
+            legal_node = node
+            break
+        if not legal_node:
+            legal_node = node
+        else:
+            if node.client_cnt < legal_node.client_cnt:
+                legal_node = node
+    nme.nme_lock.release()
+
+    if not legal_node:
+        print "flag1"
+        fd.send(generate_return_msg(404))
+    else:
+        legal_node.client_cnt += 1
+        local_uuid=nme.node_uuid_allocate()
+        #print type(local_uuid)
+        fd.send(generate_return_msg(200,**{"uuid":str(local_uuid),"allocated_super_node":legal_node.node_id,"target_node_ip":legal_node.addr}))
     pass
 action_dict = {
     "super_node_register": super_node_register_cb,
-    "super_node_update":super_node_update_cb
+    "super_node_update":super_node_update_cb,
+    "super_node_unregister":super_node_unregister_cb,
+    "super_node_request":super_node_request_cb
 }
 
 
