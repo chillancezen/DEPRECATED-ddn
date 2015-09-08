@@ -100,6 +100,11 @@ def super_node_unregister_cb(arg):
         fd.send(generate_return_msg(404))
     pass
 def super_node_request_cb(arg):
+    """
+    called by index ndoe
+    :param arg:
+    :return:
+    """
     fd,addr,nme,para=arg
     if nme.role is not "node_index":
         fd.send(generate_return_msg(401))
@@ -117,7 +122,7 @@ def super_node_request_cb(arg):
     if "ban_super_node_list" in para:
         for ele in para["ban_super_node_list"]:
             ban_list.append(ele)
-    print recommand_node,ban_list
+
     legal_node=None
     nme.nme_lock.acquire()
     for id in nme.node_tbl:
@@ -136,7 +141,7 @@ def super_node_request_cb(arg):
     nme.nme_lock.release()
 
     if not legal_node:
-        print "flag1"
+
         fd.send(generate_return_msg(404))
     else:
         legal_node.client_cnt += 1
@@ -144,11 +149,81 @@ def super_node_request_cb(arg):
         #print type(local_uuid)
         fd.send(generate_return_msg(200,**{"uuid":str(local_uuid),"allocated_super_node":legal_node.node_id,"target_node_ip":legal_node.addr}))
     pass
+
+def gene_node_register_cb(arg):
+    """
+    called by super node
+    :param arg:
+    :return:
+    """
+    fd,addr,nme,para=arg
+    if nme.role is not "node_super":
+        fd.send(generate_return_msg(401))
+        return
+
+    #validate uuid string
+    if "uuid" not in para or len(para["uuid"]) is not 36:
+        fd.send(generate_return_msg(400))
+        return
+    node=nme.node_find_by_uuid(para["uuid"])
+    if node:
+        #already registered
+        fd.send(generate_return_msg(301,**{"uuid":node.uuid,"gene_node_id":node.node_id}))
+    else:
+        node=nme.node_alloc(node_mng.node_info,**{"id":nme.node_id_allocate(),"uuid":para["uuid"]})
+        nme.node_register(node.node_id,node)
+        fd.send(generate_return_msg(200,**{"uuid":node.uuid,"gene_node_id":node.node_id}))
+        #help(node)
+    pass
+def gene_node_update_cb(arg):
+    """
+    called by super node
+    :param arg:
+    :return:
+    """
+    fd,addr,nme,para=arg
+    if nme.role is not "node_super":
+        fd.send(generate_return_msg(401))
+        return
+    if "uuid" not in para:
+        fd.send(generate_return_msg(400))
+        return
+    node=nme.node_find_by_uuid(para["uuid"])
+    if node :
+        nme.node_update(node.node_id)
+        fd.send(generate_return_msg(200))
+    else:
+        fd.send(generate_return_msg(404))
+    pass
+def gene_node_unregister_cb(arg):
+    """
+    called by super node
+    :param arg:
+    :return:
+    """
+    fd,addr,nme,para=arg
+    if nme.role is not "node_super":
+        fd.send(generate_return_msg(401))
+        return
+    if "uuid" not in para:
+        fd.send(generate_return_msg(400))
+        return
+    node=nme.node_find_by_uuid(para["uuid"])
+    if node:
+        nme.node_delete(node.node_id)
+        fd.send(generate_return_msg(200))
+    else:
+        fd.send(generate_return_msg(404))
+    pass
+
 action_dict = {
     "super_node_register": super_node_register_cb,
     "super_node_update":super_node_update_cb,
     "super_node_unregister":super_node_unregister_cb,
-    "super_node_request":super_node_request_cb
+    "super_node_request":super_node_request_cb,
+    "gene_node_register":gene_node_register_cb,
+    "gene_node_update":gene_node_update_cb,
+    "gene_node_unregister":gene_node_unregister_cb
 }
 
 
@@ -188,4 +263,4 @@ def cmd_worker(arg):
 
 if __name__ == "__main__":
     # help(tuple)
-    start_daemon()
+    start_daemon(node_role="node_super")
