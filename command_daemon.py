@@ -1,8 +1,10 @@
+#! /usr/bin/python 
 import socket
 import threading
 import json
 import error_code
-import node_mng
+#import util.node_mng
+from util import  node_mng
 
 __author__ = 'jzheng'
 
@@ -235,7 +237,10 @@ def cmd_worker(arg):
     fd, addr, nme = arg
 
     while True:
-        msg = fd.recv(1460)
+        try:
+            msg = fd.recv(1460)
+        except:
+            break
         if not msg:  # link torn down
             break
         jmsg = None
@@ -263,4 +268,4 @@ def cmd_worker(arg):
 
 if __name__ == "__main__":
     # help(tuple)
-    start_daemon(node_role="node_super")
+    start_daemon(node_role="node_index")
