@@ -1,0 +1,18 @@
+{
+"message_type":"super_node_request",
+"recommand_super_node":"130.140.25.134",
+"ban_super_node_list":["130.140.25.134"]
+}
+
+{
+"message_type":"super_node_register"
+}
+{
+"message_type":"gene_node_register",
+"uuid": "40425888-633b-4772-823b-ff510b11e244"
+}
+
+{
+"message_type":"gene_node_unregister",
+"uuid": "40425888-633b-4772-823b-ff510b11e244"
+}

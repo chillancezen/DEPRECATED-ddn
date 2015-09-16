@@ -2,11 +2,9 @@
 import random
 import uuid
 import threading
-node_role=[
-	"node_index",
-	"node_super",
-	"node_gene"
-]
+import ddn_role
+
+
 class node_info:
 
 	"""
@@ -40,7 +38,7 @@ class node_mng_entity:
 	node_id_pool=set()
 	node_uuid_pool=set()
 	role=None
-	def __init__(self,node_role="node_index"):
+	def __init__(self,node_role=ddn_role.role_index):
 
 		#self.lock=threading.Lock()
 		#spawn the age timer threading

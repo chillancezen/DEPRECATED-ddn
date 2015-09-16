@@ -5,11 +5,12 @@ import json
 import error_code
 #import util.node_mng
 from util import  node_mng
+from util import  ddn_role
 
 __author__ = 'jzheng'
 
 
-def start_daemon(addr="0.0.0.0", port=507, node_role="node_index"):
+def start_daemon(addr="0.0.0.0", port=507, node_role=ddn_role.role_index):
     """
     generate and node management entity and start to resolve underlay user request
     :param addr:
@@ -55,7 +56,7 @@ def super_node_register_cb(arg):
     :return: None
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_index":
+    if nme.role != ddn_role.role_index:
         fd.send(generate_return_msg(401))
         return
     node=nme.node_find_by_addr(addr[0])
@@ -74,7 +75,7 @@ def super_node_update_cb(arg):
     :return:None
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_index":
+    if nme.role != ddn_role.role_index:
         fd.send(generate_return_msg(401))
         return
     node=nme.node_find_by_addr(addr[0])
@@ -91,7 +92,7 @@ def super_node_unregister_cb(arg):
     :return:
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_index":
+    if nme.role != ddn_role.role_index:
         fd.send(generate_return_msg(401))
         return
     node=nme.node_find_by_addr(addr[0])
@@ -108,7 +109,7 @@ def super_node_request_cb(arg):
     :return:
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_index":
+    if nme.role != ddn_role.role_index:
         fd.send(generate_return_msg(401))
         return
     # validate parameter
@@ -159,7 +160,7 @@ def gene_node_register_cb(arg):
     :return:
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_super":
+    if nme.role != ddn_role.role_super:
         fd.send(generate_return_msg(401))
         return
 
@@ -184,7 +185,7 @@ def gene_node_update_cb(arg):
     :return:
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_super":
+    if nme.role != ddn_role.role_super:
         fd.send(generate_return_msg(401))
         return
     if "uuid" not in para:
@@ -204,7 +205,7 @@ def gene_node_unregister_cb(arg):
     :return:
     """
     fd,addr,nme,para=arg
-    if nme.role is not "node_super":
+    if nme.role != ddn_role.role_super:
         fd.send(generate_return_msg(401))
         return
     if "uuid" not in para:
@@ -268,4 +269,4 @@ def cmd_worker(arg):
 
 if __name__ == "__main__":
     # help(tuple)
-    start_daemon(node_role="node_index")
+    start_daemon(node_role=ddn_role.role_super)

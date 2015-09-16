@@ -1,0 +1,41 @@
+#! /usr/bin/python
+def fun(cute,biu):
+	print cute,biu
+class node_mng_entity:
+	"""
+	node management entity,there should be only one 
+	instance on index node or super node
+	"""
+	mee=123
+	def __init__(self):
+		self.node_tbl=dict()
+		self.node_expiry_time=300 #seconds age timers
+		self.node_id_pool=set()
+	
+	def node_alloc(self,node_type,**arg):
+	
+		pass
+
+	def node_find(self,key_id):
+		if key_id not in self.node_tbl:
+			return None
+		else :
+			return self.node_tbl[key_id]
+
+	
+	def node_register(self):
+		pass
+	def node_delete(self):
+		pass
+	def node_update(self):
+		pass
+	def age_timer(self):
+		"""
+		age timer thread 
+		"""
+		pass
+
+if __name__ == "__main__":
+	nme=node_mng_entity()
+	nme.node_alloc(node_mng_entity,**{})
+	print nme.node_find("123456")
