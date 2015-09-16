@@ -24,7 +24,7 @@ class client_entity:
 
     """
     role=None
-    def __init__(self,role,upper_ip="127.0.0.1",upper_port=507,index_ip="127.0.0.1",index_port=507):
+    def __init__(self,role,upper_ip="127.0.0.1",upper_port=507,index_ip="127.0.0.1",index_port=507,heart_beat_time=3):
         """
         the ip and port needed
         :param role:
@@ -52,6 +52,9 @@ class client_entity:
         elif self.role == ddn_role.role_super:
             self.index_fd=self.get_tcp_socket_fd(self.index_ip,self.index_port)
         """
+        self.age_pid=None
+        self.age_exit=False
+        self.age_beat_timer=heart_beat_time
         pass
     def get_tcp_socket_fd(self,ip,port):
         fd=None
@@ -155,9 +158,121 @@ class client_entity:
         else:
             return False
         pass
+    def stop_heart_beat_thread(self):
+        try:
+            self.age_exit=True
+            self.age_pid.join()
+            self.age_pid=None
+        except:
+            self.age_pid=None
+        pass
 
+    def start_heart_beat_thread(self,fd):
+        if self.age_pid != None:
+            return
+        self.age_exit=False
+        self.age_pid=threading.Thread(target=self.heart_beat_worker,kwargs={"fd":fd})
+        self.age_pid.start()
+        pass
+
+    def heart_beat_worker(self,fd):
+        while self.age_exit is False:
+            if self.role == ddn_role.role_super:
+                msg={}
+                msg["message_type"]="super_node_update"
+                try:
+                    fd.send(generate_msg(**msg))
+                    rc=self.recv_msg(fd)
+                    if rc is None:
+                        self.heart_beat_error()
+                        pass
+                    else:
+                        rc_dic=resolve_msg(rc)
+                        if "status code" not in rc_dic or rc_dic["status code"] != 200:
+                            self.heart_beat_error()
+                except:
+                    self.heart_beat_error()
+                    pass
+                pass
+            elif self.role == ddn_role.role_gene:
+                msg={}
+                msg["message_type"]="gene_node_update"
+                msg["uuid"]=self.uuid
+                try:
+                    fd.send(generate_msg(**msg))
+                    rc=self.recv_msg(fd)
+                    if rc is None:
+                        self.heart_beat_error()
+                        pass
+                    else:
+                        rc_dic=resolve_msg(rc)
+                        if "status code" not in rc_dic or rc_dic["status code"] != 200:
+                            self.heart_beat_error()
+                except:
+                    self.heart_beat_error()
+                    pass
+                pass
+            threading._sleep(self.age_beat_timer)
+        pass
+    def heart_beat_error(self):
+        """
+        called when heart beat message exception occurs
+        """
+        print "heart error"
+        pass
+    def unregister_node(self):
+        msg={}
+        fd=None
+        if self.role == ddn_role.role_super:
+            msg["message_type"]="super_node_unregister"
+            fd=self.index_fd
+        elif self.role == ddn_role.role_gene:
+            msg["message_type"]="gene_node_unregister"
+            msg["uuid"]=self.uuid
+            fd=self.upper_fd
+        try:
+            rc=fd.send(generate_msg(**msg))
+            if rc ==False:
+                return False
+            rc=self.recv_msg(fd)
+            if rc == None:
+                return False
+            rc_dic=resolve_msg(rc)
+            if "status code" not in rc_dic or rc_dic["status code"] != 200:
+                return False
+            return True
+        except:
+            return False
+        pass
+    def dispose_node(self):
+        try:
+            self.stop_heart_beat_thread()
+            self.index_fd.close()
+            self.upper_fd.close()
+        except:
+            pass
 
 if __name__=="__main__":
-    #client_entity(ddn_role.role_super,index_ip="130.140.25.1").register_node()
-    ce=client_entity(ddn_role.role_gene,index_ip="130.140.25.1").register_node()
+    pass
+    """
+    ce=client_entity(ddn_role.role_super,index_ip="130.140.25.1")
+    #ce=client_entity(ddn_role.role_gene,index_ip="130.140.25.1")
+    print ce.register_node()
+    ce.start_heart_beat_thread(ce.index_fd)
+    threading._sleep(5)
+    ce.stop_heart_beat_thread()
+    ce.unregister_node()
+    ce.dispose_node()
 
+
+    ce.register_node()
+    ce.stop_heart_beat_thread()
+    ce.start_heart_beat_thread(ce.index_fd)
+    threading._sleep(5)
+    ce.stop_heart_beat_thread()
+    threading._sleep(3)
+    ce.start_heart_beat_thread(ce.upper_fd)
+
+    threading._sleep(5)
+    ce.stop_heart_beat_thread()
+    """

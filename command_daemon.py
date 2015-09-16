@@ -268,5 +268,6 @@ def cmd_worker(arg):
 
 
 if __name__ == "__main__":
+    pass
     # help(tuple)
-    start_daemon(node_role=ddn_role.role_super)
+    #start_daemon(node_role=ddn_role.role_index)

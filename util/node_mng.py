@@ -18,10 +18,10 @@ class node_info:
 		self.client_cnt=0
 
 	def node_init_callback(self):
-		
+		print "init"
 		pass
 	def node_delete_callback(self):
-
+		print "delete"
 		pass
 	def node_expiry_callback(self):
 		print "expiry"
